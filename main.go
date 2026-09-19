@@ -21,7 +21,9 @@ type GameState struct {
 	Rows     int32
 	Scene    GameScene
 
+	Camera   rl.Camera2D
 	MousePos rl.Vector2
+	// MouseCell rl.Vector2
 }
 
 const (
@@ -32,18 +34,36 @@ const (
 func (g *GameState) Init() {
 
 	g.Settings.ScreenWidth = 800
-	g.Settings.ScreenHeight = 600
+	g.Settings.ScreenHeight = 640
 	g.Cols = g.Settings.ScreenWidth / CELL_SIZE
 	g.Rows = g.Settings.ScreenHeight / CELL_SIZE
 	g.Paused = false
 
+	g.Camera.Zoom = float32(1.0)
+	g.Camera.Offset = rl.Vector2{X: float32(g.Settings.ScreenWidth / 2), Y: float32(g.Settings.ScreenHeight / 2)}
+	g.Camera.Target = rl.Vector2{X: float32(g.Settings.ScreenWidth / 2), Y: float32(g.Settings.ScreenHeight / 2)}
 }
 
 func (g *GameState) Update() {
+	g.MousePos = rl.GetMousePosition()
+	// fmt.Println(get_cell(g.MousePos))
 
+	// Camera update
+	g.CameraUpdate()
 }
 
 func (g *GameState) Draw() {
+
+	rl.BeginDrawing()
+
+	rl.BeginMode2D(g.Camera)
+
+	rl.DrawRectangle(1, 1, 10, 10, rl.Green)
+
+	rl.ClearBackground(rl.RayWhite)
+	// rl.DrawText("Congrats! You created your first window!", 190, 200, 20, rl.LightGray)
+	rl.DrawText(fmt.Sprintf("%f", rl.GetFrameTime()), 10, 10, 20, rl.LightGray)
+
 	for i := int32(0); i <= g.Settings.ScreenWidth; i += CELL_SIZE {
 		rl.DrawLine(i, 0, i, g.Settings.ScreenHeight, rl.LightGray)
 	}
@@ -51,11 +71,7 @@ func (g *GameState) Draw() {
 		rl.DrawLine(0, i, g.Settings.ScreenWidth, i, rl.LightGray)
 	}
 
-	rl.BeginDrawing()
-
-	rl.ClearBackground(rl.RayWhite)
-	// rl.DrawText("Congrats! You created your first window!", 190, 200, 20, rl.LightGray)
-	rl.DrawText(fmt.Sprintf("%f", rl.GetFrameTime()), 10, 10, 20, rl.LightGray)
+	rl.EndMode2D()
 
 	rl.EndDrawing()
 }
@@ -71,8 +87,10 @@ func main() {
 	defer rl.CloseWindow()
 
 	for !rl.WindowShouldClose() {
+
 		game.Update()
 
 		game.Draw()
+
 	}
 }
