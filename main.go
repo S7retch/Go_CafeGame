@@ -6,23 +6,31 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type GameScene struct {
-}
+type ScreenState int
+
+const (
+	StatePlay ScreenState = iota
+	StatePaused
+)
 
 type GameSettings struct {
 	ScreenWidth  int32
 	ScreenHeight int32
 }
 
-type GameState struct {
+type Game struct {
 	Settings GameSettings
-	Paused   bool
-	Cols     int32
-	Rows     int32
-	Scene    GameScene
+	TextureDictionary
+	State ScreenState
+	// Canvas   rl.RenderTexture2D
+	Cols int32
+	Rows int32
+	// Scene    GameScene
+	Debug bool
 
-	Camera   rl.Camera2D
-	MousePos rl.Vector2
+	Camera    rl.Camera2D
+	MousePos  rl.Vector2
+	MouseCell rl.Vector2
 	// MouseCell rl.Vector2
 }
 
@@ -31,38 +39,73 @@ const (
 )
 
 // This runs before the main() loop
-func (g *GameState) Init() {
+func (g *Game) Init() {
 
 	g.Settings.ScreenWidth = 800
 	g.Settings.ScreenHeight = 640
+	g.State = StatePlay
+	g.Textures = make(map[string]rl.Texture2D)
+
+	// g.Canvas = rl.LoadRenderTexture(g.Settings.ScreenWidth, g.Settings.ScreenHeight)
+
 	g.Cols = g.Settings.ScreenWidth / CELL_SIZE
 	g.Rows = g.Settings.ScreenHeight / CELL_SIZE
-	g.Paused = false
+	// g.Paused = false
+	g.Debug = false
 
 	g.Camera.Zoom = float32(1.0)
 	g.Camera.Offset = rl.Vector2{X: float32(g.Settings.ScreenWidth / 2), Y: float32(g.Settings.ScreenHeight / 2)}
 	g.Camera.Target = rl.Vector2{X: float32(g.Settings.ScreenWidth / 2), Y: float32(g.Settings.ScreenHeight / 2)}
+
 }
 
-func (g *GameState) Update() {
-	g.MousePos = rl.GetMousePosition()
-	// fmt.Println(get_cell(g.MousePos))
+func (g *Game) Update() {
 
+	if g.Debug == true {
+		fmt.Println("Game state:", g.State)
+	}
+
+	// Check which state the game is in
+	switch g.State {
+	case StatePaused:
+		g.updatePaused()
+	case StatePlay:
+		g.updatePlay()
+	}
+
+}
+
+func (g *Game) updatePlay() {
+	if rl.IsKeyPressed(rl.KeyP) {
+		g.State = StatePaused
+	}
 	// Camera update
-	g.CameraUpdate()
+	g.updateCamera()
+	g.updateMouse()
 }
 
-func (g *GameState) Draw() {
+func (g *Game) Draw() {
 
 	rl.BeginDrawing()
 
+	switch g.State {
+	case StatePaused:
+		g.drawPaused()
+	case StatePlay:
+		g.drawPlay()
+	}
+
+	rl.EndDrawing()
+}
+
+func (g *Game) drawPlay() {
 	rl.BeginMode2D(g.Camera)
+
+	rl.DrawText(fmt.Sprintf("%f", rl.GetFrameTime()), 10, 10, 20, rl.LightGray)
 
 	rl.DrawRectangle(1, 1, 10, 10, rl.Green)
 
 	rl.ClearBackground(rl.RayWhite)
-	// rl.DrawText("Congrats! You created your first window!", 190, 200, 20, rl.LightGray)
-	rl.DrawText(fmt.Sprintf("%f", rl.GetFrameTime()), 10, 10, 20, rl.LightGray)
 
 	for i := int32(0); i <= g.Settings.ScreenWidth; i += CELL_SIZE {
 		rl.DrawLine(i, 0, i, g.Settings.ScreenHeight, rl.LightGray)
@@ -71,20 +114,28 @@ func (g *GameState) Draw() {
 		rl.DrawLine(0, i, g.Settings.ScreenWidth, i, rl.LightGray)
 	}
 
-	rl.EndMode2D()
+	g.drawMouse()
 
-	rl.EndDrawing()
+	rl.EndMode2D()
 }
 
 func main() {
 
-	game := GameState{}
+	game := Game{}
 	game.Init()
 
 	rl.InitWindow(game.Settings.ScreenWidth, game.Settings.ScreenHeight, "Cafe game")
 	rl.SetTargetFPS(60)
 
 	defer rl.CloseWindow()
+
+	game.LoadT("Mouse", "assets/Mouse/MouseSquare.png")
+	game.LoadT("MouseOther", "assets/Mouse/MouseSquare_NoC.png")
+	game.LoadT("Mouse", "assets/Mouse/MouseSquare_NoC.png")
+	game.LoadT("MouseFake", "assets/Mouse/MouseSqu.png")
+
+	fmt.Println(game.Textures)
+	defer game.UnloadTextures()
 
 	for !rl.WindowShouldClose() {
 

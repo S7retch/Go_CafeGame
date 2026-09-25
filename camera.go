@@ -7,29 +7,38 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-func (g *GameState) CameraUpdate() {
+func (g *Game) updateCamera() {
 
 	if rl.IsMouseButtonDown(rl.MouseButtonMiddle) {
 		delta := rl.GetMouseDelta()
 
 		delta = rl.Vector2Scale(delta, float32(-1.0)/g.Camera.Zoom)
 		g.Camera.Target = rl.Vector2Add(g.Camera.Target, delta)
-		fmt.Println(g.Camera.Target)
+
+		if g.Debug == true {
+			fmt.Println("Camera target:", g.Camera.Target)
+		}
 	}
 
 	wheel := rl.GetMouseWheelMove()
 
 	if wheel != float32(0.0) {
-
-		fmt.Println("mouse wheel")
+		if g.Debug == true {
+			fmt.Println("Mouse wheel moved")
+		}
 		mouse_world_pos := rl.GetScreenToWorld2D(g.MousePos, g.Camera)
+		// fmt.Println(g.MousePos)
+		// fmt.Println(mouse_world_pos)
+
 		g.Camera.Offset = g.MousePos
 		g.Camera.Target = mouse_world_pos
 		scale := float32(0.2) * wheel
 		g.Camera.Zoom = rl.Clamp(float32(math.Exp(math.Log(float64(g.Camera.Zoom))+float64(scale))), 1.0, 64.0)
 	}
 
-	fmt.Println(g.Camera.Zoom)
+	if g.Debug == true {
+		fmt.Println("Camera zoom:", g.Camera.Zoom)
+	}
 
 	if g.Camera.Zoom == float32(1.0) { //# Put camera back to centre, otherwise can go out of bounds
 
@@ -46,11 +55,9 @@ func (g *GameState) CameraUpdate() {
 	// so allowed target.x range is:
 	min_tx := g.Camera.Offset.X / g.Camera.Zoom
 	max_tx := float32(g.Settings.ScreenWidth) - view_w + (g.Camera.Offset.X / g.Camera.Zoom)
-	fmt.Println(max_tx)
 
 	min_ty := float32(g.Camera.Offset.Y) / float32(g.Camera.Zoom)
 	max_ty := float32(g.Settings.ScreenHeight) - view_h + (g.Camera.Offset.Y / g.Camera.Zoom)
-	fmt.Println("min: ", min_ty, "max: ", max_ty)
 
 	// handle case where world is smaller than view: center camera on world
 	if max_tx <= min_tx {
