@@ -32,6 +32,9 @@ type Game struct {
 	MousePos  rl.Vector2
 	MouseCell rl.Vector2
 	// MouseCell rl.Vector2
+
+	Map       TileMap
+	BuildMode bool
 }
 
 const (
@@ -79,6 +82,7 @@ func (g *Game) updatePlay() {
 	if rl.IsKeyPressed(rl.KeyP) {
 		g.State = StatePaused
 	}
+	g.updateBuild() // Check if build mode is toggled
 	// Camera update
 	g.updateCamera()
 	g.updateMouse()
@@ -99,9 +103,8 @@ func (g *Game) Draw() {
 }
 
 func (g *Game) drawPlay() {
-	rl.BeginMode2D(g.Camera)
 
-	rl.DrawText(fmt.Sprintf("%f", rl.GetFrameTime()), 10, 10, 20, rl.LightGray)
+	rl.BeginMode2D(g.Camera)
 
 	rl.DrawRectangle(1, 1, 10, 10, rl.Green)
 
@@ -114,9 +117,21 @@ func (g *Game) drawPlay() {
 		rl.DrawLine(0, i, g.Settings.ScreenWidth, i, rl.LightGray)
 	}
 
+	if g.BuildMode {
+
+		rl.DrawText("Building", 100, 10, 20, rl.LightGray)
+		g.drawBuild()
+	}
+
+	g.drawTiles()
+
 	g.drawMouse()
 
 	rl.EndMode2D()
+
+	// Draw after camera, so it's fixed
+	rl.DrawText(fmt.Sprintf("%f", rl.GetFrameTime()), 10, 10, 20, rl.LightGray)
+
 }
 
 func main() {
@@ -129,12 +144,17 @@ func main() {
 
 	defer rl.CloseWindow()
 
-	game.LoadT("Mouse", "assets/Mouse/MouseSquare.png")
-	game.LoadT("MouseOther", "assets/Mouse/MouseSquare_NoC.png")
-	game.LoadT("Mouse", "assets/Mouse/MouseSquare_NoC.png")
-	game.LoadT("MouseFake", "assets/Mouse/MouseSqu.png")
+	game.createMap()
 
-	fmt.Println(game.Textures)
+	// Load textures
+	game.LoadT("Mouse", "assets/Mouse/MouseSquare.png") // Different because its not a tile
+	game.LoadTile("BrickWall", "assets/Walls/BrickWall.png", true)
+	game.LoadTile("Burger", "assets/Food/Burger.png", false)
+	game.LoadTile("Drink", "assets/Food/Drink.png", false)
+	game.LoadTile("Table", "assets/Furniture/Table.png", true)
+	game.LoadTile("Chair", "assets/Furniture/Chair.png", true)
+	game.LoadTile("FloorTile", "assets/Floor/Floor.png", false)
+
 	defer game.UnloadTextures()
 
 	for !rl.WindowShouldClose() {

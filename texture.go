@@ -11,12 +11,15 @@ type TextureDictionary struct {
 	Textures map[string]rl.Texture2D
 }
 
-func (g *Game) LoadT(key string, filepath string) error {
+func (g *Game) LoadT(key string, filepath string) (TileID, error) {
 
 	if _, exists := g.Textures[key]; exists {
-		return fmt.Errorf("texture with key '%s' already exists", key)
+		return 0, fmt.Errorf("texture with key '%s' already exists", key)
 		// fmt.Println("Invalid key of: %s, loading default texture", key)
 	}
+
+	// var id TileID
+	id := TileID(len(g.Textures) + 1)
 
 	_, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
@@ -28,7 +31,9 @@ func (g *Game) LoadT(key string, filepath string) error {
 		fmt.Println("Error:", err)
 	}
 
-	return err
+	fmt.Printf("Key for ID %d is %s\n", id, key)
+
+	return id, err
 
 }
 

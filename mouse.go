@@ -22,6 +22,6 @@ func (g *Game) updateMouse() {
 func (g *Game) drawMouse() {
 	// rl.DrawTexture(g.Textures["Mouse"], int32(g.MousePos.X)-(CELL_SIZE/2), int32(g.MousePos.Y)-(CELL_SIZE/2), rl.White)
 
-	rl.DrawTexture(g.Textures["Mouse"], int32(g.MouseCell.X), int32(g.MouseCell.Y), rl.White)
+	rl.DrawTexture(g.Textures["Mouse"], int32(g.MouseCell.X*float32(CELL_SIZE)), int32(g.MouseCell.Y*float32(CELL_SIZE)), rl.White)
 
 }
