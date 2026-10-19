@@ -20,8 +20,8 @@ type GameSettings struct {
 
 type Game struct {
 	Settings GameSettings
-	TextureDictionary
-	State ScreenState
+	Textures *TextureDictionary
+	State    ScreenState
 	// Canvas   rl.RenderTexture2D
 	Cols int32
 	Rows int32
@@ -34,7 +34,7 @@ type Game struct {
 	// MouseCell rl.Vector2
 
 	Map       TileMap
-	BuildMode bool
+	BuildMode BuildMode
 }
 
 const (
@@ -47,7 +47,7 @@ func (g *Game) Init() {
 	g.Settings.ScreenWidth = 800
 	g.Settings.ScreenHeight = 640
 	g.State = StatePlay
-	g.Textures = make(map[string]rl.Texture2D)
+	g.Textures = newTextureDictionary()
 
 	// g.Canvas = rl.LoadRenderTexture(g.Settings.ScreenWidth, g.Settings.ScreenHeight)
 
@@ -59,6 +59,8 @@ func (g *Game) Init() {
 	g.Camera.Zoom = float32(1.0)
 	g.Camera.Offset = rl.Vector2{X: float32(g.Settings.ScreenWidth / 2), Y: float32(g.Settings.ScreenHeight / 2)}
 	g.Camera.Target = rl.Vector2{X: float32(g.Settings.ScreenWidth / 2), Y: float32(g.Settings.ScreenHeight / 2)}
+
+	g.Map = *newMap()
 
 }
 
@@ -117,13 +119,13 @@ func (g *Game) drawPlay() {
 		rl.DrawLine(0, i, g.Settings.ScreenWidth, i, rl.LightGray)
 	}
 
-	if g.BuildMode {
+	if g.BuildMode.Active {
 
 		rl.DrawText("Building", 100, 10, 20, rl.LightGray)
 		g.drawBuild()
 	}
 
-	g.drawTiles()
+	// g.drawTiles()
 
 	g.drawMouse()
 
@@ -144,18 +146,26 @@ func main() {
 
 	defer rl.CloseWindow()
 
-	game.createMap()
+	// game.createMap()
 
 	// Load textures
-	game.LoadT("Mouse", "assets/Mouse/MouseSquare.png") // Different because its not a tile
-	game.LoadTile("BrickWall", "assets/Walls/BrickWall.png", true)
-	game.LoadTile("Burger", "assets/Food/Burger.png", false)
-	game.LoadTile("Drink", "assets/Food/Drink.png", false)
-	game.LoadTile("Table", "assets/Furniture/Table.png", true)
-	game.LoadTile("Chair", "assets/Furniture/Chair.png", true)
-	game.LoadTile("FloorTile", "assets/Floor/Floor.png", false)
+	game.Textures.LoadT("Floor", "assets/Floor.png")
+	game.Textures.LoadT("Food", "assets/Food.png")
+	game.Textures.LoadT("Furniture", "assets/Furniture.png")
+	game.Textures.LoadT("Walls", "assets/Walls.png")
+	game.Textures.LoadT("UI", "assets/UI.png")
 
-	defer game.UnloadTextures()
+	game.Map.loadTiles(*game.Textures)
+
+	// game.LoadT("Mouse", "assets/Mouse/MouseSquare.png") // Different because its not a tile
+	// game.LoadTile("BrickWall", "assets/Walls/BrickWall.png", true)
+	// game.LoadTile("Burger", "assets/Food/Burger.png", false)
+	// game.LoadTile("Drink", "assets/Food/Drink.png", false)
+	// game.LoadTile("Table", "assets/Furniture/Table.png", true)
+	// game.LoadTile("Chair", "assets/Furniture/Chair.png", true)
+	// game.LoadTile("FloorTile", "assets/Floor/Floor.png", false)
+
+	defer game.Textures.UnloadTextures()
 
 	for !rl.WindowShouldClose() {
 

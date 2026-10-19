@@ -11,42 +11,38 @@ type TextureDictionary struct {
 	Textures map[string]rl.Texture2D
 }
 
-func (g *Game) LoadT(key string, filepath string) (TileID, error) {
+func newTextureDictionary() *TextureDictionary {
+	dict := make(map[string]rl.Texture2D)
+	return &TextureDictionary{Textures: dict}
+}
 
-	if _, exists := g.Textures[key]; exists {
-		return 0, fmt.Errorf("texture with key '%s' already exists", key)
-		// fmt.Println("Invalid key of: %s, loading default texture", key)
+func (t *TextureDictionary) LoadT(key string, filepath string) error {
+
+	if _, exists := t.Textures[key]; exists {
+		return fmt.Errorf("texture with key '%s' already exists", key)
 	}
-
-	// var id TileID
-	id := TileID(len(g.Textures) + 1)
 
 	_, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
-		fmt.Printf("File %s does not exist\n", filepath)
-		g.Textures[key] = rl.LoadTexture("assets/Default/InvalidTexture.png")
-	} else if err == nil {
-		g.Textures[key] = rl.LoadTexture(filepath)
-	} else {
-		fmt.Println("Error:", err)
+		panic(err)
 	}
 
-	fmt.Printf("Key for ID %d is %s\n", id, key)
+	t.Textures[key] = rl.LoadTexture(filepath)
 
-	return id, err
+	return nil
 
 }
 
-func (g *Game) UnloadTextures() {
-	for _, value := range g.Textures {
+func (t *TextureDictionary) UnloadTextures() {
+	for _, value := range t.Textures {
 		rl.UnloadTexture(value)
 	}
-	g.Textures = make(map[string]rl.Texture2D)
+	t.Textures = make(map[string]rl.Texture2D)
 }
 
-func (g *Game) GetTexture(key string) rl.Texture2D {
-	if _, exists := g.Textures[key]; exists {
-		return g.Textures[key]
+func (t *TextureDictionary) GetTexture(key string) rl.Texture2D {
+	if _, exists := t.Textures[key]; exists {
+		return t.Textures[key]
 	} else {
 		fmt.Printf("Texture %s does not exist, loading default texture", key)
 		return rl.LoadTexture("assets/Default/InvalidTexture.png")
